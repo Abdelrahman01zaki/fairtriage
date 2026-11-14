@@ -1,5 +1,3 @@
-from itertools import pairwise
-
 from ai_intelligence_lab.algorithms.search.bfs import bfs
 from ai_intelligence_lab.algorithms.search.dfs import dfs
 from ai_intelligence_lab.core.events import AlgorithmEvent, EventType

@@ -1,3 +1,5 @@
+from itertools import pairwise
+
 from ai_intelligence_lab.algorithms.search.ucs import ucs
 from ai_intelligence_lab.core.events import AlgorithmEvent, EventType
 from ai_intelligence_lab.environments.grid import Grid
@@ -169,7 +171,7 @@ def test_path_is_connected_from_start_to_goal():
 
     assert path[0] == grid.start
     assert path[-1] == grid.goal
-    for a, b in zip(path, path[1:]):
+    for a, b in pairwise(path):
         assert b in grid.neighbors(a)
 
 

@@ -7,7 +7,7 @@ from ai_intelligence_lab.environments.grid import Grid
 
 
 def _found_cost(events):
-    return [e.cost for e in events if e.kind is EventType.PATH_FOUND][0]
+    return next(e.cost for e in events if e.kind is EventType.PATH_FOUND)
 
 
 def _expanded_count(events):
