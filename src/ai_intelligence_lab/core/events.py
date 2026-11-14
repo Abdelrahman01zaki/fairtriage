@@ -10,6 +10,7 @@ class EventType(Enum):
 
     STARTED = auto()
     NODE_DISCOVERED = auto()
+    NODE_UPDATED = auto()
     NODE_EXPANDED = auto()
     PATH_FOUND = auto()
     COMPLETED = auto()
@@ -23,3 +24,4 @@ class AlgorithmEvent:
     node: Hashable | None = None
     parent: Hashable | None = None
     path: tuple[Hashable, ...] | None = None
+    cost: float | None = None
