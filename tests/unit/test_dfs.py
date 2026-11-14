@@ -36,16 +36,33 @@ def test_path_is_valid_but_not_shortest():
     assert dfs_path == ((0, 0), (0, 1), (0, 2), (1, 2), (1, 1), (1, 0))
 
 
-def test_a_cell_can_be_discovered_again_before_it_is_expanded():
+def test_a_cell_reached_again_before_it_is_expanded_is_updated():
     events = list(dfs(Grid.from_text(["S..", "G.."])))
 
-    parents_seen = [
-        e.parent
-        for e in events
-        if e.kind is EventType.NODE_DISCOVERED and e.node == (1, 1)
+    history = [(e.kind, e.parent) for e in events if e.node == (1, 1)]
+
+    assert history == [
+        (EventType.NODE_DISCOVERED, (0, 1)),
+        (EventType.NODE_UPDATED, (1, 2)),
+        (EventType.NODE_EXPANDED, None),
     ]
 
-    assert parents_seen == [(0, 1), (1, 2)]
+
+def test_each_cell_is_discovered_only_once():
+    events = list(dfs(Grid.from_text(["S..", "G.."])))
+
+    discovered = [e.node for e in events if e.kind is EventType.NODE_DISCOVERED]
+
+    assert len(discovered) == len(set(discovered))
+    assert len(discovered) == 5
+
+
+def test_repeat_pushes_are_reported_as_updates():
+    events = list(dfs(Grid.from_text(["S..", "G.."])))
+
+    updated = [e.node for e in events if e.kind is EventType.NODE_UPDATED]
+
+    assert updated == [(1, 1), (1, 0)]
 
 
 def test_no_path_when_goal_is_walled_off():
