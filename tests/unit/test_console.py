@@ -75,3 +75,13 @@ def test_print_events_with_no_events():
 
     assert print_events([], out) == 0
     assert out.getvalue() == ""
+
+
+def test_format_event_shows_cost_when_present():
+    event = AlgorithmEvent(EventType.NODE_EXPANDED, node=(1, 2), cost=3.0)
+    assert "cost=3" in format_event(1, event)
+
+
+def test_format_event_skips_cost_when_missing():
+    event = AlgorithmEvent(EventType.NODE_EXPANDED, node=(1, 2))
+    assert "cost" not in format_event(1, event)

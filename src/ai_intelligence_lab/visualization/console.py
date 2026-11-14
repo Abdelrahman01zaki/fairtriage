@@ -18,6 +18,8 @@ def format_event(step: int, event: AlgorithmEvent) -> str:
         parts.append(f"node={event.node}")
     if event.parent is not None:
         parts.append(f"parent={event.parent}")
+    if event.cost is not None:             
+        parts.append(f"cost={event.cost:g}")
     if event.path is not None:
         parts.append("path=" + " -> ".join(str(cell) for cell in event.path))
     return "  ".join(parts).rstrip()
