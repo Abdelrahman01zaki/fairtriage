@@ -21,6 +21,9 @@ class Grid:
     walls: frozenset[Position] = frozenset()
 
     def __post_init__(self) -> None:
+        # Type hints are not enforced at runtime: a caller may pass a plain
+        # set. Freeze a private copy so the grid is truly immutable.
+        object.__setattr__(self, "walls", frozenset(self.walls))
         if self.height <= 0 or self.width <= 0:
             raise ValueError("grid size must be positive")
         for name, cell in (("start", self.start), ("goal", self.goal)):

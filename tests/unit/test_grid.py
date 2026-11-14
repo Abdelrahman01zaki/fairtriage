@@ -78,3 +78,17 @@ def test_grid_is_immutable():
 
     with pytest.raises(dataclasses.FrozenInstanceError):
         grid.width = 10
+
+
+def test_two_goals_are_rejected():
+    with pytest.raises(ValueError):
+        Grid.from_text(["S.G", "..G"])
+
+
+def test_walls_given_as_set_are_frozen_and_copied():
+    original = {(0, 1)}
+    grid = Grid(2, 2, start=(0, 0), goal=(1, 1), walls=original)
+
+    assert isinstance(grid.walls, frozenset)
+    original.add((1, 0))  # changing the caller's set must not change the grid
+    assert grid.walls == frozenset({(0, 1)})
