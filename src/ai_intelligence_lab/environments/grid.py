@@ -1,7 +1,7 @@
 """Rectangular grid world used by the search algorithms."""
 
-from collections.abc import Sequence
-from dataclasses import dataclass
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
 
 Position = tuple[int, int]  # (row, column)
 
@@ -9,21 +9,32 @@ Position = tuple[int, int]  # (row, column)
 # deterministic, so the same grid always produces the same events.
 _DIRECTIONS: tuple[Position, ...] = ((-1, 0), (0, 1), (1, 0), (0, -1))
 
+DEFAULT_COST = 1.0
+
 
 @dataclass(frozen=True, slots=True)
 class Grid:
-    """An immutable grid with walls, one start cell and one goal cell."""
+    """An immutable grid with walls, one start cell, one goal cell, and
+    an optional per-cell movement cost.
+
+    ``weights`` maps a cell to the cost of *entering* it. A cell with no
+    entry costs ``DEFAULT_COST`` (1.0), so BFS and DFS - which never look
+    at weights - behave exactly as before: every step still costs 1.
+    """
 
     height: int
     width: int
     start: Position
     goal: Position
     walls: frozenset[Position] = frozenset()
+    weights: Mapping[Position, float] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         # Type hints are not enforced at runtime: a caller may pass a plain
-        # set. Freeze a private copy so the grid is truly immutable.
+        # set or dict. Freeze private copies so the grid is truly immutable.
         object.__setattr__(self, "walls", frozenset(self.walls))
+        object.__setattr__(self, "weights", dict(self.weights))
+
         if self.height <= 0 or self.width <= 0:
             raise ValueError("grid size must be positive")
         for name, cell in (("start", self.start), ("goal", self.goal)):
@@ -34,6 +45,13 @@ class Grid:
         for wall in self.walls:
             if not self.in_bounds(wall):
                 raise ValueError(f"wall {wall} is outside the grid")
+        for cell, weight in self.weights.items():
+            if not self.in_bounds(cell):
+                raise ValueError(f"weighted cell {cell} is outside the grid")
+            if cell in self.walls:
+                raise ValueError(f"weighted cell {cell} is a wall")
+            if weight <= 0:
+                raise ValueError(f"weight for {cell} must be positive")
 
     def in_bounds(self, cell: Position) -> bool:
         row, col = cell
@@ -47,8 +65,16 @@ class Grid:
         candidates = ((row + dr, col + dc) for dr, dc in _DIRECTIONS)
         return tuple(c for c in candidates if self.is_walkable(c))
 
+    def cost(self, cell: Position) -> float:
+        """Cost of entering ``cell``. Unweighted cells cost DEFAULT_COST."""
+        return self.weights.get(cell, DEFAULT_COST)
+
     @classmethod
-    def from_text(cls, rows: Sequence[str]) -> "Grid":
+    def from_text(
+        cls,
+        rows: Sequence[str],
+        weights: Mapping[Position, float] | None = None,
+    ) -> "Grid":
         """Build a grid from text: '#' wall, '.' free, 'S' start, 'G' goal."""
         if not rows:
             raise ValueError("grid needs at least one row")
@@ -76,4 +102,6 @@ class Grid:
 
         if start is None or goal is None:
             raise ValueError("grid needs one 'S' and one 'G'")
-        return cls(len(rows), width, start, goal, frozenset(walls))
+        return cls(
+            len(rows), width, start, goal, frozenset(walls), weights or {}
+        )
