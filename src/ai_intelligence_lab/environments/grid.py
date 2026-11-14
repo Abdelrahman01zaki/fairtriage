@@ -3,6 +3,7 @@
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from types import MappingProxyType
 
 Position = tuple[int, int]  # (row, column)
 
@@ -34,7 +35,9 @@ class Grid:
         # Type hints are not enforced at runtime: a caller may pass a plain
         # set or dict. Freeze private copies so the grid is truly immutable.
         object.__setattr__(self, "walls", frozenset(self.walls))
-        object.__setattr__(self, "weights", dict(self.weights))
+        object.__setattr__(
+            self, "weights", MappingProxyType(dict(self.weights))
+        )
 
         if self.height <= 0 or self.width <= 0:
             raise ValueError("grid size must be positive")

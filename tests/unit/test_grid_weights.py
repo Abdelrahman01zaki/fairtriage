@@ -37,3 +37,19 @@ def test_zero_or_negative_weight_is_rejected():
 def test_negative_nan_or_infinite_weight_is_rejected(bad):
     with pytest.raises(ValueError, match="positive and finite"):
         Grid.from_text(["S.G"], weights={(0, 1): bad})
+
+
+def test_weights_cannot_be_changed_through_the_grid():
+    grid = Grid.from_text(["S.G"], weights={(0, 1): 5.0})
+
+    with pytest.raises(TypeError):
+        grid.weights[(0, 1)] = 1.0
+
+
+def test_changing_the_source_dict_does_not_change_the_grid():
+    source = {(0, 1): 5.0}
+    grid = Grid.from_text(["S.G"], weights=source)
+
+    source[(0, 1)] = 1.0
+
+    assert grid.cost((0, 1)) == 5.0
