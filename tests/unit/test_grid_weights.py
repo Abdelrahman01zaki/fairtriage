@@ -31,3 +31,9 @@ def test_weight_outside_grid_is_rejected():
 def test_zero_or_negative_weight_is_rejected():
     with pytest.raises(ValueError, match="positive"):
         Grid.from_text(["S.G"], weights={(0, 1): 0.0})
+
+
+@pytest.mark.parametrize("bad", [-1.0, float("nan"), float("inf")])
+def test_negative_nan_or_infinite_weight_is_rejected(bad):
+    with pytest.raises(ValueError, match="positive and finite"):
+        Grid.from_text(["S.G"], weights={(0, 1): bad})

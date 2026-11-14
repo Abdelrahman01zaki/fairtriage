@@ -1,5 +1,6 @@
 """Rectangular grid world used by the search algorithms."""
 
+import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 
@@ -50,8 +51,10 @@ class Grid:
                 raise ValueError(f"weighted cell {cell} is outside the grid")
             if cell in self.walls:
                 raise ValueError(f"weighted cell {cell} is a wall")
-            if weight <= 0:
-                raise ValueError(f"weight for {cell} must be positive")
+            if not math.isfinite(weight) or weight <= 0:
+                raise ValueError(
+                    f"weight for {cell} must be positive and finite"
+                )
 
     def in_bounds(self, cell: Position) -> bool:
         row, col = cell
