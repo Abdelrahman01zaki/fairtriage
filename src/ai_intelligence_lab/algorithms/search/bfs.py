@@ -18,6 +18,7 @@ The start cell is known from STARTED, so it gets no NODE_DISCOVERED.
 from collections import deque
 from collections.abc import Iterator
 
+from ai_intelligence_lab.algorithms.search.paths import build_path
 from ai_intelligence_lab.core.events import AlgorithmEvent, EventType
 from ai_intelligence_lab.environments.grid import Grid, Position
 
@@ -39,7 +40,7 @@ def bfs(grid: Grid) -> Iterator[AlgorithmEvent]:
             yield AlgorithmEvent(
                 EventType.PATH_FOUND,
                 node=current,
-                path=_build_path(parents, current),
+                path=build_path(parents, current),
             )
             break
 
@@ -57,18 +58,3 @@ def bfs(grid: Grid) -> Iterator[AlgorithmEvent]:
             )
 
     yield AlgorithmEvent(EventType.COMPLETED)
-
-
-def _build_path(
-    parents: dict[Position, Position | None], goal: Position
-) -> tuple[Position, ...]:
-    """Walk the parent links back from the goal, then reverse."""
-    path: list[Position] = []
-    node: Position | None = goal
-
-    while node is not None:
-        path.append(node)
-        node = parents[node]
-
-    path.reverse()
-    return tuple(path)
