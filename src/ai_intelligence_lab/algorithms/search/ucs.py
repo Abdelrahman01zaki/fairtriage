@@ -49,9 +49,7 @@ def ucs(grid: Grid) -> Iterator[AlgorithmEvent]:
             continue  # a stale, more expensive copy of an expanded cell
 
         parents[current] = parent
-        yield AlgorithmEvent(
-            EventType.NODE_EXPANDED, node=current, cost=cost_so_far
-        )
+        yield AlgorithmEvent(EventType.NODE_EXPANDED, node=current, cost=cost_so_far)
 
         if current == goal:
             yield AlgorithmEvent(
@@ -78,9 +76,7 @@ def ucs(grid: Grid) -> Iterator[AlgorithmEvent]:
                 else EventType.NODE_UPDATED
             )
             best_known_cost[neighbor] = new_cost
-            heapq.heappush(
-                frontier, (new_cost, next(tie_breaker), neighbor, current)
-            )
+            heapq.heappush(frontier, (new_cost, next(tie_breaker), neighbor, current))
             yield AlgorithmEvent(
                 event_kind, node=neighbor, parent=current, cost=new_cost
             )

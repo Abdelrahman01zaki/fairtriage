@@ -45,12 +45,12 @@ def test_is_walkable():
 @pytest.mark.parametrize(
     "rows",
     [
-        [],                      # no rows
-        ["S..", "..."],          # no goal
-        ["...", "..G"],          # no start
-        ["S.S", "..G"],          # two starts
-        ["S..", "..", "..G"],    # rows of different length
-        ["S.x", "..G"],          # unknown character
+        [],  # no rows
+        ["S..", "..."],  # no goal
+        ["...", "..G"],  # no start
+        ["S.S", "..G"],  # two starts
+        ["S..", "..", "..G"],  # rows of different length
+        ["S.x", "..G"],  # unknown character
     ],
 )
 def test_from_text_rejects_invalid_layouts(rows):

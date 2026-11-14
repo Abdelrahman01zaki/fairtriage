@@ -44,9 +44,7 @@ def test_start_equal_to_goal_finds_trivial_path():
     assert list(greedy(grid)) == [
         AlgorithmEvent(EventType.STARTED, node=(0, 0)),
         AlgorithmEvent(EventType.NODE_EXPANDED, node=(0, 0)),
-        AlgorithmEvent(
-            EventType.PATH_FOUND, node=(0, 0), path=((0, 0),), cost=0.0
-        ),
+        AlgorithmEvent(EventType.PATH_FOUND, node=(0, 0), path=((0, 0),), cost=0.0),
         AlgorithmEvent(EventType.COMPLETED),
     ]
 
@@ -66,9 +64,7 @@ def test_unreachable_goal_ends_without_path():
 def test_no_cell_is_discovered_twice():
     grid = Grid.from_text(["S...", "....", "...G"])
 
-    discovered = [
-        e.node for e in greedy(grid) if e.kind is EventType.NODE_DISCOVERED
-    ]
+    discovered = [e.node for e in greedy(grid) if e.kind is EventType.NODE_DISCOVERED]
 
     assert len(discovered) == len(set(discovered))
 

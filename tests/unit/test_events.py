@@ -16,9 +16,7 @@ def test_optional_fields_default_to_none():
 
 def test_event_keeps_given_values():
     path = ((0, 0), (1, 0), (1, 1))
-    event = AlgorithmEvent(
-        EventType.PATH_FOUND, node=(1, 1), parent=(1, 0), path=path
-    )
+    event = AlgorithmEvent(EventType.PATH_FOUND, node=(1, 1), parent=(1, 0), path=path)
 
     assert event.node == (1, 1)
     assert event.parent == (1, 0)

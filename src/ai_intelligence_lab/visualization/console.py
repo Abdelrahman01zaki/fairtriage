@@ -18,16 +18,14 @@ def format_event(step: int, event: AlgorithmEvent) -> str:
         parts.append(f"node={event.node}")
     if event.parent is not None:
         parts.append(f"parent={event.parent}")
-    if event.cost is not None:             
+    if event.cost is not None:
         parts.append(f"cost={event.cost:g}")
     if event.path is not None:
         parts.append("path=" + " -> ".join(str(cell) for cell in event.path))
     return "  ".join(parts).rstrip()
 
 
-def print_events(
-    events: Iterable[AlgorithmEvent], out: TextIO | None = None
-) -> int:
+def print_events(events: Iterable[AlgorithmEvent], out: TextIO | None = None) -> int:
     """Print every event as it arrives and return how many were printed."""
     if out is None:
         out = sys.stdout  # resolved at call time so tests can capture it

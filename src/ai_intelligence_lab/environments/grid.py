@@ -35,9 +35,7 @@ class Grid:
         # Type hints are not enforced at runtime: a caller may pass a plain
         # set or dict. Freeze private copies so the grid is truly immutable.
         object.__setattr__(self, "walls", frozenset(self.walls))
-        object.__setattr__(
-            self, "weights", MappingProxyType(dict(self.weights))
-        )
+        object.__setattr__(self, "weights", MappingProxyType(dict(self.weights)))
 
         if self.height <= 0 or self.width <= 0:
             raise ValueError("grid size must be positive")
@@ -55,9 +53,7 @@ class Grid:
             if cell in self.walls:
                 raise ValueError(f"weighted cell {cell} is a wall")
             if not math.isfinite(weight) or weight <= 0:
-                raise ValueError(
-                    f"weight for {cell} must be positive and finite"
-                )
+                raise ValueError(f"weight for {cell} must be positive and finite")
 
     def in_bounds(self, cell: Position) -> bool:
         row, col = cell
@@ -108,6 +104,4 @@ class Grid:
 
         if start is None or goal is None:
             raise ValueError("grid needs one 'S' and one 'G'")
-        return cls(
-            len(rows), width, start, goal, frozenset(walls), weights or {}
-        )
+        return cls(len(rows), width, start, goal, frozenset(walls), weights or {})

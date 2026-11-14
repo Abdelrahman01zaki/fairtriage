@@ -119,9 +119,6 @@ def maze(height: int, width: int, *, seed: int = 0) -> Grid:
         stack.append(nxt)
 
     walls = frozenset(
-        (r, c)
-        for r in range(height)
-        for c in range(width)
-        if (r, c) not in open_cells
+        (r, c) for r in range(height) for c in range(width) if (r, c) not in open_cells
     )
     return Grid(height, width, (0, 0), (height - 1, width - 1), walls)

@@ -28,21 +28,13 @@ def test_exact_event_sequence_with_an_expensive_cell():
         AlgorithmEvent(
             EventType.NODE_DISCOVERED, node=(0, 1), parent=(0, 0), cost=10.0
         ),
-        AlgorithmEvent(
-            EventType.NODE_DISCOVERED, node=(1, 0), parent=(0, 0), cost=1.0
-        ),
+        AlgorithmEvent(EventType.NODE_DISCOVERED, node=(1, 0), parent=(0, 0), cost=1.0),
         AlgorithmEvent(EventType.NODE_EXPANDED, node=(1, 0), cost=1.0),
-        AlgorithmEvent(
-            EventType.NODE_DISCOVERED, node=(1, 1), parent=(1, 0), cost=2.0
-        ),
+        AlgorithmEvent(EventType.NODE_DISCOVERED, node=(1, 1), parent=(1, 0), cost=2.0),
         AlgorithmEvent(EventType.NODE_EXPANDED, node=(1, 1), cost=2.0),
-        AlgorithmEvent(
-            EventType.NODE_DISCOVERED, node=(1, 2), parent=(1, 1), cost=3.0
-        ),
+        AlgorithmEvent(EventType.NODE_DISCOVERED, node=(1, 2), parent=(1, 1), cost=3.0),
         AlgorithmEvent(EventType.NODE_EXPANDED, node=(1, 2), cost=3.0),
-        AlgorithmEvent(
-            EventType.NODE_DISCOVERED, node=(0, 2), parent=(1, 2), cost=4.0
-        ),
+        AlgorithmEvent(EventType.NODE_DISCOVERED, node=(0, 2), parent=(1, 2), cost=4.0),
         AlgorithmEvent(EventType.NODE_EXPANDED, node=(0, 2), cost=4.0),
         AlgorithmEvent(
             EventType.PATH_FOUND,
@@ -93,9 +85,7 @@ def test_start_equal_to_goal():
     assert events == [
         AlgorithmEvent(EventType.STARTED, node=(0, 0), cost=0.0),
         AlgorithmEvent(EventType.NODE_EXPANDED, node=(0, 0), cost=0.0),
-        AlgorithmEvent(
-            EventType.PATH_FOUND, node=(0, 0), path=((0, 0),), cost=0.0
-        ),
+        AlgorithmEvent(EventType.PATH_FOUND, node=(0, 0), path=((0, 0),), cost=0.0),
         AlgorithmEvent(EventType.COMPLETED),
     ]
 

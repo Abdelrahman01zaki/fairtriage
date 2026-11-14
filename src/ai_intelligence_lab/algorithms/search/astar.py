@@ -49,9 +49,7 @@ def astar(grid: Grid) -> Iterator[AlgorithmEvent]:
             continue  # a stale, more expensive copy of an expanded cell
 
         parents[current] = parent
-        yield AlgorithmEvent(
-            EventType.NODE_EXPANDED, node=current, cost=cost_so_far
-        )
+        yield AlgorithmEvent(EventType.NODE_EXPANDED, node=current, cost=cost_so_far)
 
         if current == goal:
             yield AlgorithmEvent(

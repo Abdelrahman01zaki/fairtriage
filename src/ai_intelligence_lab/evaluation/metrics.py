@@ -57,9 +57,7 @@ def measure(grid: Grid, events: Iterable[AlgorithmEvent]) -> SearchMetrics:
             path = cast("tuple[Position, ...] | None", event.path)
     seconds = perf_counter() - started
 
-    path_cost = (
-        None if path is None else sum((grid.cost(c) for c in path[1:]), 0.0)
-    )
+    path_cost = None if path is None else sum((grid.cost(c) for c in path[1:]), 0.0)
     return SearchMetrics(
         events=total,
         expanded=expanded,

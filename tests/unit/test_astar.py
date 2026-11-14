@@ -23,21 +23,13 @@ def test_astar_event_sequence_on_weighted_grid():
         AlgorithmEvent(
             EventType.NODE_DISCOVERED, node=(0, 1), parent=(0, 0), cost=10.0
         ),
-        AlgorithmEvent(
-            EventType.NODE_DISCOVERED, node=(1, 0), parent=(0, 0), cost=1.0
-        ),
+        AlgorithmEvent(EventType.NODE_DISCOVERED, node=(1, 0), parent=(0, 0), cost=1.0),
         AlgorithmEvent(EventType.NODE_EXPANDED, node=(1, 0), cost=1.0),
-        AlgorithmEvent(
-            EventType.NODE_DISCOVERED, node=(1, 1), parent=(1, 0), cost=2.0
-        ),
+        AlgorithmEvent(EventType.NODE_DISCOVERED, node=(1, 1), parent=(1, 0), cost=2.0),
         AlgorithmEvent(EventType.NODE_EXPANDED, node=(1, 1), cost=2.0),
-        AlgorithmEvent(
-            EventType.NODE_DISCOVERED, node=(1, 2), parent=(1, 1), cost=3.0
-        ),
+        AlgorithmEvent(EventType.NODE_DISCOVERED, node=(1, 2), parent=(1, 1), cost=3.0),
         AlgorithmEvent(EventType.NODE_EXPANDED, node=(1, 2), cost=3.0),
-        AlgorithmEvent(
-            EventType.NODE_DISCOVERED, node=(0, 2), parent=(1, 2), cost=4.0
-        ),
+        AlgorithmEvent(EventType.NODE_DISCOVERED, node=(0, 2), parent=(1, 2), cost=4.0),
         AlgorithmEvent(EventType.NODE_EXPANDED, node=(0, 2), cost=4.0),
         AlgorithmEvent(
             EventType.PATH_FOUND,
@@ -66,9 +58,7 @@ def test_astar_stays_optimal_when_some_cells_cost_less_than_default():
 
 
 def test_astar_expands_fewer_cells_than_ucs_on_an_open_grid():
-    grid = Grid.from_text(
-        [".....", ".....", "S.G..", ".....", "....."]
-    )
+    grid = Grid.from_text([".....", ".....", "S.G..", ".....", "....."])
 
     astar_expanded = _expanded_count(astar(grid))
     ucs_expanded = _expanded_count(ucs(grid))
@@ -83,9 +73,7 @@ def test_start_equal_to_goal_finds_trivial_path():
     assert list(astar(grid)) == [
         AlgorithmEvent(EventType.STARTED, node=(0, 0), cost=0.0),
         AlgorithmEvent(EventType.NODE_EXPANDED, node=(0, 0), cost=0.0),
-        AlgorithmEvent(
-            EventType.PATH_FOUND, node=(0, 0), path=((0, 0),), cost=0.0
-        ),
+        AlgorithmEvent(EventType.PATH_FOUND, node=(0, 0), path=((0, 0),), cost=0.0),
         AlgorithmEvent(EventType.COMPLETED),
     ]
 
