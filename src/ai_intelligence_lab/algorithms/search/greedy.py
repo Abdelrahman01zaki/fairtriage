@@ -38,7 +38,7 @@ def greedy(grid: Grid) -> Iterator[AlgorithmEvent]:
 
         if current == goal:
             path = build_path(parents, current)
-            route_cost = sum((grid.cost(cell) for cell in path[1:]), 0.0)
+            route_cost = grid.path_cost(path)
             yield AlgorithmEvent(
                 EventType.PATH_FOUND,
                 node=current,

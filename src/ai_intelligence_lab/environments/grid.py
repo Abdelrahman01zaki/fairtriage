@@ -71,6 +71,13 @@ class Grid:
         """Cost of entering ``cell``. Unweighted cells cost DEFAULT_COST."""
         return self.weights.get(cell, DEFAULT_COST)
 
+    def path_cost(self, path: Sequence[Position]) -> float:
+        """Total cost of walking ``path``.
+
+        The start cell is free: only the cells entered after it are paid for.
+        """
+        return sum((self.cost(cell) for cell in path[1:]), 0.0)
+
     @classmethod
     def from_text(
         cls,
