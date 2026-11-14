@@ -128,3 +128,58 @@ def test_node_updated_never_fires_with_per_cell_costs():
     for grid in grids:
         kinds = [e.kind for e in ucs(grid)]
         assert EventType.NODE_UPDATED not in kinds
+
+
+_BIG_GRID_ROWS = ["S..#.", ".#...", "...#G"]
+_BIG_GRID_WEIGHTS = {(0, 1): 3.0, (1, 0): 2.0, (2, 2): 5.0, (1, 3): 4.0}
+
+
+def _big_grid():
+    return Grid.from_text(_BIG_GRID_ROWS, weights=_BIG_GRID_WEIGHTS)
+
+
+def test_expanded_costs_never_decrease():
+    events = list(ucs(_big_grid()))
+
+    costs = [e.cost for e in events if e.kind is EventType.NODE_EXPANDED]
+
+    assert costs == sorted(costs)
+
+
+def test_every_cell_is_expanded_at_most_once():
+    events = list(ucs(_big_grid()))
+
+    expanded = [e.node for e in events if e.kind is EventType.NODE_EXPANDED]
+
+    assert len(expanded) == len(set(expanded))
+
+
+def test_reported_cost_equals_sum_of_entering_costs_along_the_path():
+    grid = _big_grid()
+    events = list(ucs(grid))
+    path = found_path(events)
+
+    assert path is not None
+    assert abs(found_cost(events) - sum(grid.cost(c) for c in path[1:])) < 1e-9
+
+
+def test_path_is_connected_from_start_to_goal():
+    grid = _big_grid()
+    path = found_path(list(ucs(grid)))
+
+    assert path[0] == grid.start
+    assert path[-1] == grid.goal
+    for a, b in zip(path, path[1:]):
+        assert b in grid.neighbors(a)
+
+
+def test_fractional_weights_are_summed_exactly_enough():
+    grid = Grid.from_text(["S.G"], weights={(0, 1): 0.1, (0, 2): 0.2})
+
+    assert abs(found_cost(list(ucs(grid))) - 0.3) < 1e-9
+
+
+def test_forced_expensive_cell_is_paid_when_there_is_no_other_route():
+    grid = Grid.from_text(["S#G", "..."], weights={(1, 1): 7.0})
+
+    assert found_cost(list(ucs(grid))) == 10.0

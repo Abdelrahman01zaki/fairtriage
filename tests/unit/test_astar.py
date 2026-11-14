@@ -107,3 +107,45 @@ def test_astar_is_lazy():
 
     assert next(generator).kind is EventType.STARTED
     assert next(generator).kind is EventType.NODE_EXPANDED
+
+
+def _node_updated_grid():
+    # Found by random search: A* emits NODE_UPDATED on this grid.
+    return Grid(
+        4,
+        5,
+        start=(2, 2),
+        goal=(0, 3),
+        walls=frozenset({(1, 0), (2, 4), (1, 3), (3, 0)}),
+        weights={
+            (0, 2): 5.0,
+            (0, 3): 0.5,
+            (0, 4): 2.0,
+            (1, 1): 10.0,
+            (1, 2): 2.0,
+            (1, 4): 2.0,
+            (2, 1): 0.5,
+            (2, 2): 0.5,
+            (2, 3): 2.0,
+            (3, 4): 5.0,
+        },
+    )
+
+
+def test_astar_emits_node_updated_and_still_matches_ucs_cost():
+    grid = _node_updated_grid()
+    events = list(astar(grid))
+
+    assert any(e.kind is EventType.NODE_UPDATED for e in events)
+    assert abs(_found_cost(events) - _found_cost(ucs(grid))) < 1e-9
+
+
+def test_known_cost_strictly_drops_on_every_update():
+    last = {}
+    for e in astar(_node_updated_grid()):
+        if e.kind is EventType.NODE_UPDATED:
+            assert e.node in last, "updated before it was ever discovered"
+        if e.kind in (EventType.NODE_DISCOVERED, EventType.NODE_UPDATED):
+            if e.node in last:
+                assert e.cost < last[e.node]
+            last[e.node] = e.cost
