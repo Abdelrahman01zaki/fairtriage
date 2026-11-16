@@ -1,11 +1,19 @@
 import ast
 from pathlib import Path
 
+import pytest
+
 import ai_intelligence_lab.allocation as allocation_package
+import ai_intelligence_lab.simulation as simulation_package
 
 
-def test_the_allocation_core_never_imports_a_specific_domain():
-    root = Path(allocation_package.__file__).parent
+@pytest.mark.parametrize(
+    "package",
+    [allocation_package, simulation_package],
+    ids=["allocation", "simulation"],
+)
+def test_a_domain_free_core_never_imports_a_specific_domain(package):
+    root = Path(package.__file__).parent
     offenders = []
     for path in sorted(root.rglob("*.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"))
