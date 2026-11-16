@@ -1,11 +1,13 @@
 """Best-first search core shared by UCS and A*.
 
-Both expand the frontier cell with the lowest f(n) = g(n) + h(n), where g(n)
+Both expand the frontier node with the lowest f(n) = g(n) + h(n), where g(n)
 is the cost paid so far and h(n) estimates the cost still to go. UCS is the
 special case h(n) = 0, so the two algorithms share this one implementation.
 
+It works on any SearchSpace, not only on a Grid.
+
 Event meaning is documented once, in EventType. Here the ``cost`` field is
-always g(n), the real cost paid, never f(n). A cell's parent and cost are only
+always g(n), the real cost paid, never f(n). A node's parent and cost are only
 final once it is EXPANDED; until then a cheaper route may replace them, which
 is what NODE_UPDATED reports.
 """
@@ -15,24 +17,26 @@ from collections.abc import Callable, Iterator
 from itertools import count
 
 from ai_intelligence_lab.algorithms.search.paths import build_path
+from ai_intelligence_lab.algorithms.search.space import Node, SearchSpace
 from ai_intelligence_lab.core.events import AlgorithmEvent, EventType
-from ai_intelligence_lab.environments.grid import Grid, Position
 
-Heuristic = Callable[[Position], float]
+Heuristic = Callable[[Node], float]
 
 
-def best_first(grid: Grid, h: Heuristic) -> Iterator[AlgorithmEvent]:
-    start, goal = grid.start, grid.goal
+def best_first(
+    space: SearchSpace[Node], h: Heuristic[Node]
+) -> Iterator[AlgorithmEvent]:
+    start, goal = space.start, space.goal
 
     # Equal f values leave the heap in the order they entered (FIFO). That
     # keeps the event order identical on every run, and the heap never has
-    # to compare two cells or parents.
+    # to compare two nodes or parents.
     tie_breaker = count()
 
-    best_known_cost: dict[Position, float] = {start: 0.0}
-    parents: dict[Position, Position | None] = {}
-    # (f, tie, g, cell, parent)
-    frontier: list[tuple[float, int, float, Position, Position | None]] = [
+    best_known_cost: dict[Node, float] = {start: 0.0}
+    parents: dict[Node, Node | None] = {}
+    # (f, tie, g, node, parent)
+    frontier: list[tuple[float, int, float, Node, Node | None]] = [
         (h(start), next(tie_breaker), 0.0, start, None)
     ]
 
@@ -42,25 +46,26 @@ def best_first(grid: Grid, h: Heuristic) -> Iterator[AlgorithmEvent]:
         _, _, cost_so_far, current, parent = heapq.heappop(frontier)
 
         if current in parents:
-            continue  # a stale, more expensive copy of an expanded cell
+            continue  # a stale, more expensive copy of an expanded node
 
         parents[current] = parent
         yield AlgorithmEvent(EventType.NODE_EXPANDED, node=current, cost=cost_so_far)
 
         if current == goal:
+            path = build_path(parents, current)
             yield AlgorithmEvent(
                 EventType.PATH_FOUND,
                 node=current,
-                path=build_path(parents, current),
+                path=path,
                 cost=cost_so_far,
             )
             break
 
-        for neighbor in grid.neighbors(current):
+        for neighbor in space.neighbors(current):
             if neighbor in parents:
                 continue  # already expanded with its final cost
 
-            new_cost = cost_so_far + grid.cost(neighbor)
+            new_cost = cost_so_far + space.step_cost(current, neighbor)
             known_cost = best_known_cost.get(neighbor)
 
             if known_cost is not None and new_cost >= known_cost:

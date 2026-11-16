@@ -41,10 +41,11 @@ def dfs(grid: Grid) -> Iterator[AlgorithmEvent]:
         yield AlgorithmEvent(EventType.NODE_EXPANDED, node=current)
 
         if current == goal:
+            path = build_path(parents, current)
             yield AlgorithmEvent(
                 EventType.PATH_FOUND,
                 node=current,
-                path=build_path(parents, current),
+                path=path,
             )
             break
 

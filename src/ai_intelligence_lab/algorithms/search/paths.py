@@ -1,20 +1,19 @@
 """Helpers shared by the search algorithms."""
 
 from collections.abc import Mapping
+from typing import TypeVar
 
-from ai_intelligence_lab.environments.grid import Position
+T = TypeVar("T")
 
 
-def build_path(
-    parents: Mapping[Position, Position | None], goal: Position
-) -> tuple[Position, ...]:
+def build_path(parents: Mapping[T, T | None], goal: T) -> tuple[T, ...]:
     """Walk the parent links back from the goal, then reverse."""
-    path: list[Position] = []
-    node: Position | None = goal
+    path: list[T] = []
+    current: T | None = goal
 
-    while node is not None:
-        path.append(node)
-        node = parents[node]
+    while current is not None:
+        path.append(current)
+        current = parents[current]
 
     path.reverse()
     return tuple(path)

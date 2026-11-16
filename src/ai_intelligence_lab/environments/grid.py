@@ -71,6 +71,14 @@ class Grid:
         """Cost of entering ``cell``. Unweighted cells cost DEFAULT_COST."""
         return self.weights.get(cell, DEFAULT_COST)
 
+    def step_cost(self, source: Position, target: Position) -> float:
+        """Cost of the move ``source`` -> ``target``: entering ``target``.
+
+        On a grid the source does not matter. It is part of the signature so a
+        Grid can be searched like any other SearchSpace.
+        """
+        return self.cost(target)
+
     def path_cost(self, path: Sequence[Position]) -> float:
         """Total cost of walking ``path``.
 
