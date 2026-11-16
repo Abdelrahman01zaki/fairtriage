@@ -47,6 +47,8 @@ class CategoryFairness:
     median_wait: float | None
     worst_wait: float | None
     gini: float
+    mean_to_hospital: float | None = None
+    worst_to_hospital: float | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,6 +72,7 @@ def fairness_report(incident: Incident, result: SimulationResult) -> FairnessRep
     """Measure ``result`` against the casualties of ``incident``."""
     known = {casualty.id: casualty for casualty in incident.casualties}
     waits: dict[TriageCategory, list[float]] = {}
+    trips: dict[TriageCategory, list[float]] = {}
     unserved: dict[TriageCategory, int] = {}
 
     for transport in result.transports:
@@ -82,6 +85,9 @@ def fairness_report(incident: Incident, result: SimulationResult) -> FairnessRep
                 f"but was transported as {transport.category.name}"
             )
         waits.setdefault(casualty.category, []).append(transport.waited)
+        trips.setdefault(casualty.category, []).append(
+            transport.time_to_hospital
+        )
 
     for casualty_id in result.unserved:
         casualty = known.get(casualty_id)
@@ -93,6 +99,7 @@ def fairness_report(incident: Incident, result: SimulationResult) -> FairnessRep
     rows: list[CategoryFairness] = []
     for category in sorted(present, key=lambda item: item.urgency):
         values = waits.get(category, [])
+        trip = trips.get(category, [])
         rows.append(
             CategoryFairness(
                 category,
@@ -102,6 +109,8 @@ def fairness_report(incident: Incident, result: SimulationResult) -> FairnessRep
                 statistics.median(values) if values else None,
                 max(values) if values else None,
                 gini(values),
+                statistics.mean(trip) if trip else None,
+                max(trip) if trip else None,
             )
         )
     return FairnessReport(tuple(rows))

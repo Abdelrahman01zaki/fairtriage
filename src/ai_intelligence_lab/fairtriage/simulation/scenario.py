@@ -88,6 +88,11 @@ class Transport:
     def waited(self) -> float:
         return self.picked_up_at - self.reported_at
 
+    @property
+    def time_to_hospital(self) -> float:
+        """Minutes from being reported until reaching the hospital."""
+        return self.delivered_at - self.reported_at
+
 
 @dataclass(frozen=True, slots=True)
 class SimulationResult:

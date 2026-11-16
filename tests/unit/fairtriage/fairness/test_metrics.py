@@ -150,3 +150,17 @@ def test_a_real_run_is_measured_per_category():
     assert report.category(RED).worst_wait == 5.0
     assert report.category(GREEN).worst_wait == 15.0
     assert report.unserved_total == 0
+
+
+def test_a_category_reports_the_time_until_the_hospital():
+    red = fairness_report(INCIDENT, RESULT).category(RED)
+
+    assert red.mean_to_hospital == 11.0
+    assert red.worst_to_hospital == 14.0
+
+
+def test_nobody_served_has_no_time_to_hospital():
+    green = fairness_report(INCIDENT, RESULT).category(GREEN)
+
+    assert green.mean_to_hospital is None
+    assert green.worst_to_hospital is None

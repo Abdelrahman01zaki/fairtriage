@@ -65,7 +65,7 @@ ALLOCATORS: dict[str, Allocator] = {
 
 HEADER = (
     f"  {'category':<10}{'served':>7}{'unserved':>9}"
-    f"{'mean':>8}{'worst':>8}{'gini':>7}"
+    f"{'mean':>8}{'worst':>8}{'gini':>7}{'to-hosp':>9}{'worst':>7}"
 )
 
 
@@ -83,7 +83,8 @@ def show(name: str, allocator: Allocator) -> None:
         print(
             f"  {row.category.name:<10}{row.transported:>7}{row.unserved:>9}"
             f"{minutes(row.mean_wait):>8}{minutes(row.worst_wait):>8}"
-            f"{row.gini:>7.2f}"
+            f"{row.gini:>7.2f}{minutes(row.mean_to_hospital):>9}"
+            f"{minutes(row.worst_to_hospital):>7}"
         )
     for item in sorted(result.transports, key=lambda t: t.casualty_id):
         print(

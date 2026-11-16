@@ -109,3 +109,7 @@ def test_a_casualty_cannot_be_both_transported_and_unserved():
 
     with pytest.raises(ValueError):
         SimulationResult((make_transport(),), ("C-1",), state, 11.0)
+
+
+def test_a_transport_knows_the_time_until_the_hospital():
+    assert make_transport().time_to_hospital == 11.0
