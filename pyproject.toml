@@ -9,7 +9,7 @@ description = "Educational lab for search, CSP and game-AI algorithms"
 requires-python = ">=3.11"
 
 [project.optional-dependencies]
-dev = ["pytest", "ruff", "mypy"]
+dev = ["pytest==9.2.0", "ruff==0.17.5", "mypy==2.4.1"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
