@@ -6,6 +6,9 @@ the paired comparison: shared randomness cancels out of the difference.
 
 The interval is a percentile bootstrap of the mean difference. It is refused
 for few pairs, because a bootstrap interval can be too narrow in small samples.
+The smallest allowed sample is 100 pairs: in a simulation of mostly-zero
+differences, 30 pairs covered the true mean 91% of the time (95% was asked)
+and 100 pairs covered it between 94.7% and 96% of the time.
 Most differences in this project are exactly zero, so the shares of positive
 and negative differences are reported next to the mean.
 """
@@ -35,7 +38,7 @@ def paired_summary(
     resamples: int = 2000,
     confidence: float = 0.95,
     seed: int = 0,
-    min_pairs: int = 30,
+    min_pairs: int = 100,
 ) -> PairedSummary:
     """Summarise ``differences`` (first policy minus second, one per seed)."""
     count = len(differences)
