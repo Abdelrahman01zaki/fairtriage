@@ -6,7 +6,11 @@ from ai_intelligence_lab.fairtriage.domain.casualty import Casualty
 from ai_intelligence_lab.fairtriage.domain.hospital import Hospital
 from ai_intelligence_lab.fairtriage.domain.incident import Incident
 from ai_intelligence_lab.fairtriage.domain.triage import TriageCategory
-from ai_intelligence_lab.fairtriage.fairness.metrics import fairness_report, gini
+from ai_intelligence_lab.fairtriage.fairness.metrics import (
+    fairness_report,
+    gini,
+    waits_to_horizon,
+)
 from ai_intelligence_lab.fairtriage.simulation.engine import simulate
 from ai_intelligence_lab.fairtriage.simulation.scenario import (
     Scenario,
@@ -183,3 +187,36 @@ def test_a_half_served_category_has_a_fraction_of_one_half():
     result = make_result([make_transport("R1", RED, 0.0, 4.0)], ["R2"])
 
     assert fairness_report(incident, result).category(RED).served_fraction == 0.5
+
+
+def test_every_casualty_has_a_wait_up_to_the_horizon():
+    waits = waits_to_horizon(INCIDENT, RESULT, 20.0)
+
+    assert list(waits) == [RED, YELLOW, GREEN]
+    assert waits[RED] == (4.0, 10.0)
+    assert waits[YELLOW] == (6.0,)
+    assert waits[GREEN] == (20.0,)
+
+
+def test_a_wait_is_capped_at_the_horizon():
+    waits = waits_to_horizon(INCIDENT, RESULT, 5.0)
+
+    assert waits[RED] == (4.0, 5.0)
+    assert waits[YELLOW] == (3.0,)
+    assert waits[GREEN] == (5.0,)
+
+
+def test_nobody_drops_out_when_nobody_is_served():
+    result = make_result([], ["R1", "R2", "Y1", "G1"])
+
+    waits = waits_to_horizon(INCIDENT, result, 20.0)
+
+    assert waits[RED] == (20.0, 20.0)
+    assert waits[YELLOW] == (18.0,)
+    assert waits[GREEN] == (20.0,)
+
+
+@pytest.mark.parametrize("horizon", [0.0, -1.0, float("inf"), float("nan"), 1.0])
+def test_a_bad_horizon_is_rejected(horizon):
+    with pytest.raises(ValueError):
+        waits_to_horizon(INCIDENT, RESULT, horizon)

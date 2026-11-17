@@ -123,3 +123,34 @@ def fairness_report(incident: Incident, result: SimulationResult) -> FairnessRep
             )
         )
     return FairnessReport(tuple(rows))
+
+
+def waits_to_horizon(
+    incident: Incident, result: SimulationResult, horizon: float
+) -> dict[TriageCategory, tuple[float, ...]]:
+    """Each casualty's wait, with the clock stopped at ``horizon``.
+
+    ``horizon`` is in minutes since the incident began. A casualty never served,
+    or served after it, counts as ``horizon - reported_at``: nobody drops out of
+    the measure because a policy left them unserved.
+    """
+    if not math.isfinite(horizon) or horizon <= 0:
+        raise ValueError("horizon must be a finite time above zero")
+    known = {casualty.id for casualty in incident.casualties}
+    served = {transport.casualty_id: transport for transport in result.transports}
+    stranger = set(served) - known
+    if stranger:
+        raise ValueError(f"unknown casualty {sorted(stranger)[0]!r}")
+
+    waits: dict[TriageCategory, list[float]] = {}
+    for casualty in incident.casualties:
+        if casualty.reported_at > horizon:
+            raise ValueError(f"casualty {casualty.id!r} was reported after the horizon")
+        cap = horizon - casualty.reported_at
+        transport = served.get(casualty.id)
+        wait = cap if transport is None else min(transport.waited, cap)
+        waits.setdefault(casualty.category, []).append(wait)
+    return {
+        category: tuple(waits[category])
+        for category in sorted(waits, key=lambda item: item.urgency)
+    }
