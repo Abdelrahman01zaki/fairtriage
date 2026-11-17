@@ -164,3 +164,22 @@ def test_nobody_served_has_no_time_to_hospital():
 
     assert green.mean_to_hospital is None
     assert green.worst_to_hospital is None
+
+
+def test_a_category_reports_the_fraction_of_its_casualties_served():
+    report = fairness_report(INCIDENT, RESULT)
+
+    assert report.category(RED).served_fraction == 1.0
+    assert report.category(YELLOW).served_fraction == 1.0
+    assert report.category(GREEN).served_fraction == 0.0
+
+
+def test_a_half_served_category_has_a_fraction_of_one_half():
+    incident = Incident(
+        "I-3",
+        "SCENE",
+        (Casualty("R1", RED, 0.0), Casualty("R2", RED, 0.0)),
+    )
+    result = make_result([make_transport("R1", RED, 0.0, 4.0)], ["R2"])
+
+    assert fairness_report(incident, result).category(RED).served_fraction == 0.5

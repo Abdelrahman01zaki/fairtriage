@@ -38,7 +38,12 @@ def gini(values: Sequence[float]) -> float:
 
 @dataclass(frozen=True, slots=True)
 class CategoryFairness:
-    """How one START category fared. Waits are None when nobody was served."""
+    """How one START category fared.
+
+    Waits and times to hospital are None when nobody was served. Every wait,
+    time and gini here is over the transported casualties only, so read it
+    together with ``served_fraction``: a policy that serves fewer can look better.
+    """
 
     category: TriageCategory
     transported: int
@@ -49,6 +54,12 @@ class CategoryFairness:
     gini: float
     mean_to_hospital: float | None = None
     worst_to_hospital: float | None = None
+
+    @property
+    def served_fraction(self) -> float:
+        """Share of this category's casualties that were transported."""
+        total = self.transported + self.unserved
+        return self.transported / total if total else 0.0
 
 
 @dataclass(frozen=True, slots=True)
