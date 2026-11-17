@@ -154,3 +154,34 @@ def waits_to_horizon(
         category: tuple(waits[category])
         for category in sorted(waits, key=lambda item: item.urgency)
     }
+
+
+@dataclass(frozen=True, slots=True)
+class HorizonWaits:
+    """One category's waits over every casualty, with the clock stopped at a horizon.
+
+    ``gini`` is None for a single casualty: one value has no inequality to measure.
+    Equal waits give 0.0 even when nobody was served, so read it together with
+    ``served_fraction``: it says how evenly the waiting was shared, not whether
+    anyone was helped.
+    """
+
+    category: TriageCategory
+    count: int
+    mean_wait: float
+    gini: float | None
+
+
+def horizon_fairness(
+    incident: Incident, result: SimulationResult, horizon: float
+) -> tuple[HorizonWaits, ...]:
+    """Mean wait and gini per category over all casualties, most urgent first."""
+    return tuple(
+        HorizonWaits(
+            category,
+            len(values),
+            statistics.mean(values),
+            gini(values) if len(values) >= 2 else None,
+        )
+        for category, values in waits_to_horizon(incident, result, horizon).items()
+    )

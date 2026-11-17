@@ -9,6 +9,7 @@ from ai_intelligence_lab.fairtriage.domain.triage import TriageCategory
 from ai_intelligence_lab.fairtriage.fairness.metrics import (
     fairness_report,
     gini,
+    horizon_fairness,
     waits_to_horizon,
 )
 from ai_intelligence_lab.fairtriage.simulation.engine import simulate
@@ -220,3 +221,37 @@ def test_nobody_drops_out_when_nobody_is_served():
 def test_a_bad_horizon_is_rejected(horizon):
     with pytest.raises(ValueError):
         waits_to_horizon(INCIDENT, RESULT, horizon)
+
+
+def test_horizon_fairness_measures_every_casualty():
+    rows = horizon_fairness(INCIDENT, RESULT, 20.0)
+
+    assert [row.category for row in rows] == [RED, YELLOW, GREEN]
+    red, yellow, green = rows
+    assert (red.count, red.mean_wait) == (2, 7.0)
+    assert red.gini == pytest.approx(3 / 14)
+    assert (yellow.count, yellow.mean_wait) == (1, 6.0)
+    assert (green.count, green.mean_wait) == (1, 20.0)
+
+
+def test_one_casualty_has_no_gini():
+    rows = horizon_fairness(INCIDENT, RESULT, 20.0)
+
+    assert rows[1].gini is None
+    assert rows[2].gini is None
+
+
+def test_a_shorter_horizon_leaves_less_inequality():
+    red = horizon_fairness(INCIDENT, RESULT, 5.0)[0]
+
+    assert red.mean_wait == 4.5
+    assert red.gini == pytest.approx(1 / 18)
+
+
+def test_equal_waits_of_unserved_casualties_have_no_inequality():
+    result = make_result([], ["R1", "R2", "Y1", "G1"])
+
+    red = horizon_fairness(INCIDENT, result, 20.0)[0]
+
+    assert red.mean_wait == 20.0
+    assert red.gini == pytest.approx(0.0)
