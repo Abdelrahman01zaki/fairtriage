@@ -56,8 +56,7 @@ SCENARIO = Scenario(
 )
 
 HEADER = (
-    f"  {'category':<10}{'served':>7}{'unserved':>9}"
-    f"{'mean':>8}{'worst':>8}{'gini':>7}"
+    f"  {'category':<10}{'served':>7}{'unserved':>9}{'mean':>8}{'worst':>8}{'gini':>7}"
 )
 
 

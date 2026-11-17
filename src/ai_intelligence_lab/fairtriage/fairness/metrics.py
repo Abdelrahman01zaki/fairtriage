@@ -85,9 +85,7 @@ def fairness_report(incident: Incident, result: SimulationResult) -> FairnessRep
                 f"but was transported as {transport.category.name}"
             )
         waits.setdefault(casualty.category, []).append(transport.waited)
-        trips.setdefault(casualty.category, []).append(
-            transport.time_to_hospital
-        )
+        trips.setdefault(casualty.category, []).append(transport.time_to_hospital)
 
     for casualty_id in result.unserved:
         casualty = known.get(casualty_id)

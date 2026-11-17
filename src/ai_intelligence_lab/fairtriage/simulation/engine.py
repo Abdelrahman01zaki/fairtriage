@@ -82,8 +82,7 @@ class _Run:
 
         left = sorted(self._waiting.values(), key=_urgency_order)
         unserved = tuple(casualty.id for casualty in left)
-        
-        
+
         return SimulationResult(
             tuple(self._transports), unserved, self._state, self._queue.now
         )
