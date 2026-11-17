@@ -9,7 +9,10 @@ import hashlib
 import json
 from dataclasses import dataclass
 
-from ai_intelligence_lab.fairtriage.fairness.metrics import CategoryFairness
+from ai_intelligence_lab.fairtriage.fairness.metrics import (
+    CategoryFairness,
+    HorizonWaits,
+)
 from ai_intelligence_lab.fairtriage.scenarios.generator import ScenarioSpec
 
 SCHEMA_VERSION = 1
@@ -48,6 +51,7 @@ class RunRecord:
     unserved_total: int
     end_time: float
     categories: tuple[CategoryFairness, ...]
+    horizon_waits: tuple[HorizonWaits, ...] = ()
 
     def __post_init__(self) -> None:
         if self.schema_version != SCHEMA_VERSION:
@@ -60,6 +64,7 @@ class RunRecord:
         if self.served < 0 or self.unserved_total < 0:
             raise ValueError("served and unserved_total cannot be negative")
         object.__setattr__(self, "categories", tuple(self.categories))
+        object.__setattr__(self, "horizon_waits", tuple(self.horizon_waits))
 
 
 def to_json_dict(record: RunRecord) -> dict[str, object]:
@@ -86,5 +91,14 @@ def to_json_dict(record: RunRecord) -> dict[str, object]:
                 "worst_to_hospital": item.worst_to_hospital,
             }
             for item in record.categories
+        ],
+        "horizon_waits": [
+            {
+                "category": item.category.name,
+                "count": item.count,
+                "mean_wait": item.mean_wait,
+                "gini": item.gini,
+            }
+            for item in record.horizon_waits
         ],
     }

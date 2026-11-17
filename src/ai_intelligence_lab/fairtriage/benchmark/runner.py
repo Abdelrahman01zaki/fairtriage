@@ -15,16 +15,29 @@ from ai_intelligence_lab.fairtriage.benchmark.records import (
     RunRecord,
     spec_hash,
 )
-from ai_intelligence_lab.fairtriage.fairness.metrics import fairness_report
+from ai_intelligence_lab.fairtriage.fairness.metrics import (
+    fairness_report,
+    horizon_fairness,
+)
 from ai_intelligence_lab.fairtriage.scenarios.generator import (
     ScenarioSpec,
     generate_scenario,
 )
 from ai_intelligence_lab.fairtriage.simulation.engine import simulate
 
+# Margin above the largest report_window planned for benchmark cells
+# (480 minutes), plus travel time, so a casualty is never reported
+# after the horizon used to measure total waiting time.
+DEFAULT_HORIZON = 1500.0
+
 
 def run_once(
-    spec_name: str, spec: ScenarioSpec, seed: int, policy: Policy
+    spec_name: str,
+    spec: ScenarioSpec,
+    seed: int,
+    policy: Policy,
+    *,
+    horizon: float = DEFAULT_HORIZON,
 ) -> RunRecord:
     """Generate one scenario and run one policy on it."""
     scenario = generate_scenario(spec, seed=seed)
@@ -35,6 +48,7 @@ def run_once(
         priority=policy.priority,
     )
     report = fairness_report(scenario.incident, result)
+    horizon_report = horizon_fairness(scenario.incident, result, horizon)
     return RunRecord(
         SCHEMA_VERSION,
         spec_name,
@@ -45,6 +59,7 @@ def run_once(
         len(result.unserved),
         result.end_time,
         report.categories,
+        horizon_report,
     )
 
 

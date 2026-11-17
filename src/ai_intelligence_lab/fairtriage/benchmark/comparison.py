@@ -25,6 +25,24 @@ def category_served_fraction(category: TriageCategory) -> Metric:
     return measure
 
 
+def category_horizon_wait(category: TriageCategory) -> Metric:
+    """Mean wait of ``category`` over every casualty, clock stopped at
+    the run's horizon, or None if the record has no such category.
+
+    Unlike ``category_served_fraction``, this covers unserved casualties
+    too (``RunRecord.horizon_waits``), so it can show waiting move
+    between categories even when nobody's served count changed.
+    """
+
+    def measure(record: RunRecord) -> float | None:
+        for item in record.horizon_waits:
+            if item.category is category:
+                return item.mean_wait
+        return None
+
+    return measure
+
+
 def paired_differences(
     records: Iterable[RunRecord],
     spec_name: str,
