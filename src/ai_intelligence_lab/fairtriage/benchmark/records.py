@@ -25,6 +25,8 @@ def spec_hash(spec: ScenarioSpec) -> str:
         "junctions": spec.junctions,
         "extra_roads": spec.extra_roads,
         "report_window": spec.report_window,
+        "special_hospitals": spec.special_hospitals,
+        "special_need_share": spec.special_need_share,
         "category_weights": sorted(
             [category.name, weight] for category, weight in spec.category_weights
         ),

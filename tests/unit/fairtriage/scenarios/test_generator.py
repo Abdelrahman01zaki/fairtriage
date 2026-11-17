@@ -129,6 +129,13 @@ def test_every_generated_scenario_can_be_simulated():
         {"category_weights": ((RED, 0.0), (GREEN, 0.0))},
         {"category_weights": ((RED, -1.0), (GREEN, 2.0))},
         {"category_weights": ((RED, 1.0), (RED, 2.0))},
+        {"special_hospitals": -1},
+        {"special_hospitals": 4},
+        {"special_need_share": -0.1},
+        {"special_need_share": 1.1},
+        {"special_need_share": float("nan")},
+        {"special_need_share": float("inf")},
+        {"special_need_share": 0.5},
     ],
 )
 def test_a_bad_spec_is_rejected(changes):
@@ -140,7 +147,9 @@ def test_the_result_does_not_depend_on_python_hash_randomization():
     code = (
         "from ai_intelligence_lab.fairtriage.scenarios.generator import "
         "ScenarioSpec, generate_scenario\n"
-        "print(generate_scenario(ScenarioSpec(), seed=3))"
+        "spec = ScenarioSpec(special_hospitals=1, special_need_share=0.5)\n"
+        "print(generate_scenario(ScenarioSpec(), seed=3))\n"
+        "print(generate_scenario(spec, seed=3))"
     )
     outputs = []
     for hash_seed in ("1", "2"):
@@ -156,3 +165,56 @@ def test_the_result_does_not_depend_on_python_hash_randomization():
 
     assert outputs[0]
     assert outputs[0] == outputs[1]
+
+
+def test_by_default_nobody_needs_a_specialty_and_no_hospital_offers_one():
+    for seed in range(10):
+        scenario = generate_scenario(SPEC, seed=seed)
+
+        assert all(item.needs == frozenset() for item in scenario.incident.casualties)
+        assert all(item.specialties == frozenset() for item in scenario.hospitals)
+
+
+def test_the_requested_number_of_hospitals_offer_the_specialty():
+    spec = ScenarioSpec(hospitals=4, special_hospitals=2, special_need_share=0.5)
+
+    for seed in range(10):
+        hospitals = generate_scenario(spec, seed=seed).hospitals
+        special = [item for item in hospitals if item.specialties]
+
+        assert len(special) == 2
+        assert all(item.specialties == frozenset({"burns"}) for item in special)
+
+
+def test_the_need_share_sets_who_needs_the_specialty():
+    everyone = ScenarioSpec(casualties=30, special_hospitals=1, special_need_share=1.0)
+    nobody = ScenarioSpec(casualties=30, special_hospitals=1, special_need_share=0.0)
+    some = ScenarioSpec(casualties=40, special_hospitals=1, special_need_share=0.5)
+
+    burns = frozenset({"burns"})
+    all_needs = generate_scenario(everyone, seed=1).incident.casualties
+    none_needs = generate_scenario(nobody, seed=1).incident.casualties
+    mixed = {item.needs for item in generate_scenario(some, seed=1).incident.casualties}
+
+    assert all(item.needs == burns for item in all_needs)
+    assert all(item.needs == frozenset() for item in none_needs)
+    assert mixed == {burns, frozenset()}
+
+
+def test_turning_needs_on_changes_nothing_else_about_the_scenario():
+    plain = ScenarioSpec()
+    with_needs = ScenarioSpec(special_hospitals=1, special_need_share=0.5)
+
+    for seed in range(20):
+        a = generate_scenario(plain, seed=seed)
+        b = generate_scenario(with_needs, seed=seed)
+
+        assert a.network == b.network
+        assert a.ambulances == b.ambulances
+        assert a.incident.location == b.incident.location
+        assert [(h.id, h.location, h.beds) for h in a.hospitals] == [
+            (h.id, h.location, h.beds) for h in b.hospitals
+        ]
+        assert [(c.id, c.category, c.reported_at) for c in a.incident.casualties] == [
+            (c.id, c.category, c.reported_at) for c in b.incident.casualties
+        ]

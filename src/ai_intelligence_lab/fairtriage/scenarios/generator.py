@@ -27,6 +27,9 @@ _AREA = 30.0
 
 _EQUAL_WEIGHTS = tuple((category, 1.0) for category in TriageCategory)
 
+# The one specialty a special hospital offers and a casualty may need.
+_SPECIALTY: frozenset[str] = frozenset({"burns"})
+
 
 @dataclass(frozen=True, slots=True)
 class ScenarioSpec:
@@ -40,6 +43,8 @@ class ScenarioSpec:
     extra_roads: int = 4
     report_window: float = 20.0
     category_weights: tuple[tuple[TriageCategory, float], ...] = _EQUAL_WEIGHTS
+    special_hospitals: int = 0
+    special_need_share: float = 0.0
 
     def __post_init__(self) -> None:
         for name in ("casualties", "hospitals", "beds_per_hospital", "ambulances"):
@@ -51,6 +56,14 @@ class ScenarioSpec:
             raise ValueError(
                 "every hospital needs its own junction, apart from the scene"
             )
+
+        if not 0 <= self.special_hospitals <= self.hospitals:
+            raise ValueError("special_hospitals must be between 0 and hospitals")
+        share = self.special_need_share
+        if not math.isfinite(share) or not 0.0 <= share <= 1.0:
+            raise ValueError("special_need_share must be between 0 and 1")
+        if share > 0 and self.special_hospitals == 0:
+            raise ValueError("a need that no hospital offers cannot be met")
 
         pairs = self.junctions * (self.junctions - 1) // 2
         most = pairs - (self.junctions - 1)
@@ -79,6 +92,9 @@ class ScenarioSpec:
 def generate_scenario(spec: ScenarioSpec, *, seed: int = 0) -> Scenario:
     """Draw one scenario. The same ``spec`` and ``seed`` give the same one."""
     rng = random.Random(seed)
+    # Needs have their own stream, so adding them moves no draw of the main one.
+    needs_rng = random.Random(f"{seed}:needs")
+    special = needs_rng.sample(range(spec.hospitals), spec.special_hospitals)
     network = _network(spec, rng)
     names = [junction.id for junction in network.junctions]
 
@@ -86,7 +102,12 @@ def generate_scenario(spec: ScenarioSpec, *, seed: int = 0) -> Scenario:
     others = [name for name in names if name != scene]
     sites = rng.sample(others, spec.hospitals)
     hospitals = tuple(
-        Hospital(f"H{number}", site, spec.beds_per_hospital)
+        Hospital(
+            f"H{number}",
+            site,
+            spec.beds_per_hospital,
+            _SPECIALTY if number - 1 in special else frozenset(),
+        )
         for number, site in enumerate(sites, start=1)
     )
 
@@ -100,12 +121,21 @@ def generate_scenario(spec: ScenarioSpec, *, seed: int = 0) -> Scenario:
     weights = [weight for _, weight in spec.category_weights if weight > 0]
     categories = rng.choices(kinds, weights=weights, k=spec.casualties)
     casualties = tuple(
-        Casualty(f"C{number}", category, round(rng.uniform(0.0, spec.report_window), 1))
+        Casualty(
+            f"C{number}",
+            category,
+            round(rng.uniform(0.0, spec.report_window), 1),
+            _needs(needs_rng, spec.special_need_share),
+        )
         for number, category in enumerate(categories, start=1)
     )
 
     incident = Incident(f"S{seed}", scene, casualties)
     return Scenario(network, incident, hospitals, ambulances)
+
+
+def _needs(rng: random.Random, share: float) -> frozenset[str]:
+    return _SPECIALTY if rng.random() < share else frozenset()
 
 
 def _gap(first: Junction, second: Junction) -> float:

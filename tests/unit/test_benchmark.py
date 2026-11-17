@@ -50,7 +50,7 @@ def test_spec_hash_is_stable_and_distinguishes_specs():
     assert spec_hash(_SCARCE) != spec_hash(other)
 
 
-_BASE = ScenarioSpec()
+_BASE = ScenarioSpec(special_hospitals=1, special_need_share=0.25)
 # One valid change per ScenarioSpec field. A new field must be added here.
 _CHANGES = {
     "casualties": 13,
@@ -60,6 +60,8 @@ _CHANGES = {
     "junctions": 13,
     "extra_roads": 5,
     "report_window": 21.0,
+    "special_hospitals": 2,
+    "special_need_share": 0.5,
     "category_weights": tuple(
         (category, 2.0 if category is TriageCategory.RED else 1.0)
         for category in TriageCategory
