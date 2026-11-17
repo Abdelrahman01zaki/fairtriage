@@ -52,6 +52,8 @@ class RunRecord:
     end_time: float
     categories: tuple[CategoryFairness, ...]
     horizon_waits: tuple[HorizonWaits, ...] = ()
+    # Minutes at which horizon_waits stopped the clock; 0.0 means not recorded.
+    horizon: float = 0.0
 
     def __post_init__(self) -> None:
         if self.schema_version != SCHEMA_VERSION:
@@ -63,6 +65,8 @@ class RunRecord:
             raise ValueError("seed cannot be negative")
         if self.served < 0 or self.unserved_total < 0:
             raise ValueError("served and unserved_total cannot be negative")
+        if self.horizon < 0:
+            raise ValueError("horizon cannot be negative")
         object.__setattr__(self, "categories", tuple(self.categories))
         object.__setattr__(self, "horizon_waits", tuple(self.horizon_waits))
 
@@ -101,4 +105,5 @@ def to_json_dict(record: RunRecord) -> dict[str, object]:
             }
             for item in record.horizon_waits
         ],
+        "horizon": record.horizon,
     }

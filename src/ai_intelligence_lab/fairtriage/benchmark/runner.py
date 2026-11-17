@@ -60,6 +60,7 @@ def run_once(
         result.end_time,
         report.categories,
         horizon_report,
+        horizon,
     )
 
 
