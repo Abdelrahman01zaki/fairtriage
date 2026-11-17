@@ -33,3 +33,5 @@ jobs:
         run: python -m mypy src
       - name: Tests
         run: python -m pytest -q
+      - name: Reproducibility probe (prints the sha256, not a gate)
+        run: python -m ai_intelligence_lab.fairtriage.benchmark.grid run --out probe.jsonl --seeds 3
