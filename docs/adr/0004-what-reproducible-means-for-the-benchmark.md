@@ -44,8 +44,14 @@ an inference, not a measurement.
 
 ## Consequences
 
-- The sha256 values above belong to the code at the time of the runs
-  (commits 4a8d87e for `grid` and 4ac1ed1 for `grid_specialty`). A change
+- The sha256 values above belong to the code at the time of the runs.
+  Which commit was checked out for each first run was not recorded. What
+  was measured: on 2026-11-17, a clean tree at 9b5b9f7 (Python 3.13.12)
+  reproduced the `grid` output byte for byte (same sha256, `cmp` identical).
+  `src/` has not changed since 4ac1ed1 (`git log -- src`). The
+  specialty grid was not re-run at 9b5b9f7. Commits 4a8d87e (`grid`) and
+  4ac1ed1 (`grid_specialty`) mark when the grids were added, not a measured
+  link to the runs. A change
   to the generator, the engine or the record format changes them on purpose
   and the new value is recorded in a later ADR.
 - Follow-up, not done: a test that compares the sha256 of a small run (for
