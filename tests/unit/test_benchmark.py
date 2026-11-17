@@ -1,3 +1,4 @@
+import dataclasses
 import json
 
 from ai_intelligence_lab.allocation.greedy import greedy_allocate
@@ -9,6 +10,7 @@ from ai_intelligence_lab.fairtriage.benchmark.runner import (
     run_experiment,
     run_once,
 )
+from ai_intelligence_lab.fairtriage.domain.triage import TriageCategory
 from ai_intelligence_lab.fairtriage.scenarios.generator import ScenarioSpec
 
 # 6 casualties, 2 hospitals with 1 bed each: real scarcity (2 beds for 6).
@@ -46,6 +48,31 @@ def test_spec_hash_is_stable_and_distinguishes_specs():
     )
     assert spec_hash(_SCARCE) == spec_hash(_SCARCE)
     assert spec_hash(_SCARCE) != spec_hash(other)
+
+
+_BASE = ScenarioSpec()
+# One valid change per ScenarioSpec field. A new field must be added here.
+_CHANGES = {
+    "casualties": 13,
+    "hospitals": 4,
+    "beds_per_hospital": 5,
+    "ambulances": 4,
+    "junctions": 13,
+    "extra_roads": 5,
+    "report_window": 21.0,
+    "category_weights": tuple(
+        (category, 2.0 if category is TriageCategory.RED else 1.0)
+        for category in TriageCategory
+    ),
+}
+
+
+def test_every_spec_field_changes_the_hash():
+    names = {field.name for field in dataclasses.fields(ScenarioSpec)}
+    assert set(_CHANGES) == names, "a new ScenarioSpec field needs a case here"
+    for name, value in _CHANGES.items():
+        changed = dataclasses.replace(_BASE, **{name: value})
+        assert spec_hash(changed) != spec_hash(_BASE), name
 
 
 def test_record_is_json_serializable():
