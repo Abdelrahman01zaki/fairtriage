@@ -17,17 +17,25 @@ from ai_intelligence_lab.environments.road_network import RoadNetwork
 from ai_intelligence_lab.fairtriage.dispatch.routing import find_route
 from ai_intelligence_lab.fairtriage.domain.hospital import Hospital
 from ai_intelligence_lab.fairtriage.domain.incident import Incident
+from ai_intelligence_lab.fairtriage.transport.priority import PriorityRule, by_urgency
 
 
 def build_transport_problem(
-    network: RoadNetwork, incident: Incident, hospitals: Iterable[Hospital]
+    network: RoadNetwork,
+    incident: Incident,
+    hospitals: Iterable[Hospital],
+    *,
+    priority: PriorityRule = by_urgency,
 ) -> AllocationProblem:
-    """The problem of taking the incident's casualties to the hospitals."""
+    """The problem of taking the incident's casualties to the hospitals.
+
+    ``priority`` says how urgent each casualty is; the default is START urgency.
+    """
     fleet = tuple(hospitals)
     demands = tuple(
         Demand(
             casualty.id,
-            casualty.category.urgency,
+            priority(casualty),
             casualty.reported_at,
             casualty.needs,
         )

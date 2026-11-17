@@ -13,6 +13,7 @@ from ai_intelligence_lab.fairtriage.simulation.repositioning import (
     stay_at_hospital,
 )
 from ai_intelligence_lab.fairtriage.simulation.scenario import Scenario
+from ai_intelligence_lab.fairtriage.transport.priority import fifo
 
 # BASE --10-- SCENE --4-- H1      SCENE --8-- H2      ISLAND has no road.
 NETWORK = RoadNetwork(
@@ -246,3 +247,36 @@ def test_every_casualty_is_either_transported_or_unserved(policy):
 
     handled = {item.casualty_id for item in result.transports} | set(result.unserved)
     assert handled == {"A", "B", "C"}
+
+
+def sent_order(result):
+    return [item.casualty_id for item in result.transports]
+
+
+def waiting_when_the_ambulance_is_back(hospitals):
+    # The only ambulance is busy until minute 28, so C2 and C3 both wait.
+    return build(
+        casualty("C1", TriageCategory.GREEN),
+        casualty("C2", TriageCategory.GREEN, at=1.0),
+        casualty("C3", TriageCategory.RED, at=2.0),
+        hospitals=hospitals,
+    )
+
+
+def test_fifo_sends_the_first_reported_casualty_first():
+    scenario = waiting_when_the_ambulance_is_back((NEAR,))
+
+    assert sent_order(simulate(scenario)) == ["C1", "C3", "C2"]
+    assert sent_order(simulate(scenario, priority=fifo)) == ["C1", "C2", "C3"]
+
+
+def test_the_priority_rule_also_decides_who_gets_the_last_bed():
+    scenario = waiting_when_the_ambulance_is_back((Hospital("HOSP-1", "H1", 2),))
+
+    triaged = simulate(scenario)
+    first_come = simulate(scenario, priority=fifo)
+
+    assert sent_order(triaged) == ["C1", "C3"]
+    assert triaged.unserved == ("C2",)
+    assert sent_order(first_come) == ["C1", "C2"]
+    assert first_come.unserved == ("C3",)

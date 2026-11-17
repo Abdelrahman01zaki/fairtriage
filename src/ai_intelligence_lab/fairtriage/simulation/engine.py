@@ -36,6 +36,7 @@ from ai_intelligence_lab.fairtriage.simulation.scenario import (
     Transport,
 )
 from ai_intelligence_lab.fairtriage.simulation.state import WorldState
+from ai_intelligence_lab.fairtriage.transport.priority import PriorityRule, by_urgency
 from ai_intelligence_lab.fairtriage.transport.problem import (
     build_transport_problem,
 )
@@ -47,22 +48,27 @@ def simulate(
     *,
     allocator: Allocator = greedy_allocate,
     repositioning: Repositioning = return_to_base,
+    priority: PriorityRule = by_urgency,
 ) -> SimulationResult:
-    """Run the scenario to the end and return everything that happened."""
-    return _Run(scenario, allocator, repositioning).execute()
+    """Run the scenario to the end and return everything that happened.
 
-
-def _urgency_order(casualty: Casualty) -> tuple[int, float, str]:
-    return (casualty.category.urgency, casualty.reported_at, casualty.id)
+    ``priority`` decides who is served first; the default is START urgency.
+    """
+    return _Run(scenario, allocator, repositioning, priority).execute()
 
 
 class _Run:
     def __init__(
-        self, scenario: Scenario, allocator: Allocator, repositioning: Repositioning
+        self,
+        scenario: Scenario,
+        allocator: Allocator,
+        repositioning: Repositioning,
+        priority: PriorityRule,
     ) -> None:
         self._scenario = scenario
         self._allocator = allocator
         self._repositioning = repositioning
+        self._priority = priority
         self._hospitals = {item.id: item for item in scenario.hospitals}
         self._queue: EventQueue[SimulationEvent] = EventQueue()
         self._state = WorldState.start(scenario.ambulances, scenario.hospitals)
@@ -70,6 +76,9 @@ class _Run:
         self._transports: list[Transport] = []
         for casualty in scenario.incident.casualties:
             self._queue.schedule(casualty.reported_at, CasualtyReported(casualty))
+
+    def _order(self, casualty: Casualty) -> tuple[int, float, str]:
+        return (self._priority(casualty), casualty.reported_at, casualty.id)
 
     def execute(self) -> SimulationResult:
         while len(self._queue) > 0:
@@ -80,7 +89,7 @@ class _Run:
                 self._apply(self._queue.pop().payload, now)
             self._dispatch(now)
 
-        left = sorted(self._waiting.values(), key=_urgency_order)
+        left = sorted(self._waiting.values(), key=self._order)
         unserved = tuple(casualty.id for casualty in left)
 
         return SimulationResult(
@@ -135,9 +144,11 @@ class _Run:
         if not open_hospitals:
             return None
 
-        waiting = tuple(sorted(self._waiting.values(), key=_urgency_order))
+        waiting = tuple(sorted(self._waiting.values(), key=self._order))
         incident = Incident(scenario.incident.id, scenario.incident.location, waiting)
-        problem = build_transport_problem(scenario.network, incident, open_hospitals)
+        problem = build_transport_problem(
+            scenario.network, incident, open_hospitals, priority=self._priority
+        )
         allocation = self._allocator(problem)
         validate_allocation(problem, allocation)
 

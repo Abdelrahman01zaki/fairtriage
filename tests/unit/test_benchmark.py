@@ -12,6 +12,7 @@ from ai_intelligence_lab.fairtriage.benchmark.runner import (
 )
 from ai_intelligence_lab.fairtriage.domain.triage import TriageCategory
 from ai_intelligence_lab.fairtriage.scenarios.generator import ScenarioSpec
+from ai_intelligence_lab.fairtriage.transport.priority import fifo
 
 # 6 casualties, 2 hospitals with 1 bed each: real scarcity (2 beds for 6).
 _SCARCE = ScenarioSpec(
@@ -24,6 +25,7 @@ _SCARCE = ScenarioSpec(
 )
 _GREEDY = Policy("greedy", greedy_allocate)
 _OPTIMAL = Policy("optimal", optimal_allocate)
+_GREEDY_FIFO = Policy("greedy_fifo", greedy_allocate, priority=fifo)
 
 
 def test_run_once_is_deterministic():
@@ -107,3 +109,31 @@ def test_experiment_rejects_empty_inputs():
 
     with pytest.raises(ValueError, match="spec"):
         Experiment(specs={}, seeds=(1,), policies={"greedy": _GREEDY})
+
+
+def test_a_policy_with_fifo_is_named_and_hashed_like_any_other():
+    fifo_record = run_once("scarce", _SCARCE, seed=1, policy=_GREEDY_FIFO)
+    triage_record = run_once("scarce", _SCARCE, seed=1, policy=_GREEDY)
+    assert fifo_record.policy_name == "greedy_fifo"
+    assert fifo_record.spec_hash == triage_record.spec_hash
+
+
+def test_fifo_serves_as_many_as_triage_but_gives_beds_to_other_categories():
+    # Everyone is reported at minute 0, so triage has a real choice to make.
+    spec = dataclasses.replace(_SCARCE, report_window=0.0)
+
+    def black(record):
+        return sum(
+            item.transported
+            for item in record.categories
+            if item.category is TriageCategory.BLACK
+        )
+
+    fifo_black = 0
+    for seed in range(20):
+        triage = run_once("scarce_w0", spec, seed=seed, policy=_GREEDY)
+        first_come = run_once("scarce_w0", spec, seed=seed, policy=_GREEDY_FIFO)
+        assert first_come.served == triage.served, seed
+        assert black(triage) == 0, seed
+        fifo_black += black(first_come)
+    assert fifo_black > 0

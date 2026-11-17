@@ -7,6 +7,7 @@ from ai_intelligence_lab.fairtriage.domain.casualty import Casualty
 from ai_intelligence_lab.fairtriage.domain.hospital import Hospital
 from ai_intelligence_lab.fairtriage.domain.incident import Incident
 from ai_intelligence_lab.fairtriage.domain.triage import TriageCategory
+from ai_intelligence_lab.fairtriage.transport.priority import fifo
 from ai_intelligence_lab.fairtriage.transport.problem import build_transport_problem
 
 JUNCTIONS = (
@@ -152,3 +153,15 @@ def test_a_scene_that_is_not_on_the_network_is_rejected():
 
     with pytest.raises(ValueError):
         build_transport_problem(city(), scene, HOSPITALS)
+
+
+def test_a_priority_rule_replaces_the_urgency_of_every_demand():
+    scene = incident(
+        Casualty("C-1", TriageCategory.RED, 0.0),
+        Casualty("C-2", TriageCategory.GREEN, 1.0),
+    )
+
+    demands = build_transport_problem(city(), scene, HOSPITALS, priority=fifo).demands
+
+    assert [item.priority for item in demands] == [0, 0]
+    assert [item.arrived_at for item in demands] == [0.0, 1.0]

@@ -29,7 +29,10 @@ def run_once(
     """Generate one scenario and run one policy on it."""
     scenario = generate_scenario(spec, seed=seed)
     result = simulate(
-        scenario, allocator=policy.allocator, repositioning=policy.repositioning
+        scenario,
+        allocator=policy.allocator,
+        repositioning=policy.repositioning,
+        priority=policy.priority,
     )
     report = fairness_report(scenario.incident, result)
     return RunRecord(
