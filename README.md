@@ -42,6 +42,16 @@ category, because differences between categories are medically intended.
   `return_to_base`, `stay_at_hospital` and `adaptive`.
 - Fairness report per category: wait times, Gini coefficient, time until the
   hospital, and the number of casualties that were never transported.
+- Seeded scenario generator: a `ScenarioSpec` and a seed give one
+  scenario, with an optional specialty need (one hospital offers a
+  specialty that a share of the casualties need).
+- A swappable priority rule: START urgency or first come, first served
+  (FIFO). The same rule orders dispatch and is the priority the
+  allocator sees.
+- Benchmark: policies run on many seeds, one flat record per run saved
+  as JSON lines, paired differences with bootstrap intervals, and two
+  grids run from the command line (see Benchmark).
+- Architecture decision records in `docs/adr/`.
 
 The repository grew out of an educational lab for search and CSP algorithms
 (BFS, DFS, UCS, greedy, A*, backtracking). Those modules are still in
@@ -61,7 +71,8 @@ python examples/compare_allocators.py
 
 On Windows with Git Bash, activate with `source .venv/Scripts/activate`.
 
-Checks run by CI on Python 3.11 and 3.13 (Ubuntu):
+Checks run by CI on Python 3.11 and 3.13 (Ubuntu 24.04, Ubuntu 26.04
+and Windows):
 
 ```bash
 python -m ruff format --check .
@@ -116,9 +127,13 @@ acceptable needs expert judgment.
   not until the hospital. Time until the hospital is reported separately.
 - There is no loading or unloading time, patients never leave hospital beds,
   and an ambulance heading back to base is not redirected on the way.
-- The triage step does not pass casualty `needs` through yet.
+- START classification ignores a casualty's `needs`. The needs are passed
+  to the allocation problem (`build_transport_problem`).
 - The optimal allocator does not favor the casualty who waited longer inside
   the same category.
+- The optimal allocator is optimal for each call, one problem at a time.
+  The simulation calls it once for every casualty it sends, so a whole
+  run is not guaranteed to be optimal.
 - The shipped scenarios are hand-designed. A Gini coefficient over two or
   three values is statistically weak.
 - "Never transported" means the casualty was not taken to a hospital in the
@@ -126,10 +141,50 @@ acceptable needs expert judgment.
 - `mypy --strict` covers `src` only, not tests or examples.
 - No real incident data, no review by medical experts and no peer review.
 
+## Benchmark
+
+A grid of 36 scenario cells (1 to 4 beds per hospital, 2, 3 or 6
+ambulances, report window 0, 60 or 240 minutes; 12 casualties and 3
+hospitals) is run on 1000 seeds under each policy:
+
+```bash
+python -m ai_intelligence_lab.fairtriage.benchmark.grid run --out runs/g.jsonl
+python -m ai_intelligence_lab.fairtriage.benchmark.grid summarize runs/g.jsonl
+```
+
+`grid` compares the triage order with first come, first served (FIFO)
+under the greedy allocator. `grid_specialty` adds a specialty hospital
+that a quarter of the casualties need, and compares greedy and optimal
+allocation under both orders. The measure is the share of RED casualties
+served. Each comparison is the difference between two policies on the
+same seed, with a bootstrap interval, and needs at least 100 pairs.
+
+What the results say, measured on this generator only (illustrative
+sizes, not real incidents):
+
+- Triage changes who is served when beds are scarce and reports arrive
+  close together: the largest difference is 0.637 in `b1_a2_w0`
+  without a specialty. With 4 beds per hospital and no specialty it was
+  exactly 0 in all 9 cells.
+- Without a specialty the total waiting over all casualties was the same
+  under triage and FIFO. Triage moves waiting between categories and
+  does not reduce it. Without a harm model no benefit is claimed.
+- With a specialty hospital the difference is smaller in scarce cells
+  (0.577 in `b1_a2_w0`) and appears at 4 beds (0.084 in `b4_a2_w0`).
+- Optimal against greedy under triage: at most 0.027 on average
+  (`b1_a2_w0`), and in no cell was optimal ahead in more than 9.7% of
+  the seeds. In a few cells it was behind in one or two seeds; the
+  cause was not investigated.
+
+Each cell is a map of where an effect appears, not a separate test. The
+limits and the sha256 of both outputs are in `docs/adr/0003` and
+`docs/adr/0004`.
+
 ## Roadmap
 
-1. Seeded scenario generator and a benchmark harness: many random scenarios
-   per policy, with averages, confidence intervals and worst cases.
+1. Seeded scenario generator and benchmark harness: done (see Benchmark).
+   Still open: a time-dependent harm model, and a generator that links a
+   casualty's category to its report time.
 2. Configurable multi-objective trade-offs and comparison with published
    policies.
 3. Dynamic replanning (road closures) and multi-incident coordination.
