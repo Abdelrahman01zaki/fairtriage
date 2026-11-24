@@ -16,6 +16,29 @@ instead of a black box.
 > not evidence about how the policies behave in general. See
 > [Known limitations](#known-limitations).
 
+## The problem
+
+After a mass-casualty incident there are more injured people than ambulances
+and hospital beds. Someone has to decide who is taken first and to which
+hospital. FairTriage turns that decision into a policy that can be run on a
+simulated incident and measured: who waited, who was never transported, and
+how evenly the waiting was shared among casualties of the same START
+category. It is a lab for comparing policies, not a tool for making the
+decision.
+
+## AI techniques in this project
+
+| Technique | Where (under `src/ai_intelligence_lab/`) |
+|-----------|------------------------------------------|
+| Search: BFS, DFS, UCS, greedy best-first, A* | `algorithms/search/` |
+| Constraint satisfaction: backtracking with named constraints | `algorithms/csp/`, `environments/timetable.py` |
+| Route finding for ambulances on a road network | `fairtriage/dispatch/routing.py` |
+| Greedy allocation, and exact optimization (min-cost flow in exact fractions, checked against brute force) | `allocation/` |
+| Discrete-event simulation | `simulation/event_queue.py`, `fairtriage/simulation/` |
+| Evaluation: fairness metrics, paired comparison with a bootstrap interval | `fairtriage/fairness/`, `fairtriage/benchmark/stats.py` |
+
+There is no machine learning and no neural network in the project.
+
 ## Background
 
 START (Simple Triage and Rapid Treatment) sorts casualties into RED, YELLOW,
