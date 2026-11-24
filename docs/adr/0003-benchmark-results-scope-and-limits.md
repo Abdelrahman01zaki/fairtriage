@@ -65,9 +65,15 @@ Results recorded (measured, 1000 seeds):
 - `grid_specialty`, optimal minus greedy under the triage order: the
   largest mean is 0.027 (0.021 to 0.033) in `b1_a2_w0`, and in no cell was
   optimal ahead in more than 9.7% of the seeds. The share of seeds where
-  optimal was behind is not zero in 5 of the 108 comparisons (0.001 to
-  0.002, one or two seeds). The cause has not been investigated: the
-  objective of the optimal allocator is not the share of RED served.
+  optimal was behind is not zero in 2 of the 36 cells (`b3_a2_w240` and
+  `b3_a3_w240`, 0.001, about one seed). Between `optimal` and
+  `optimal_fifo` it is not zero in 3 of 36 cells (`b4_a2_w60`,
+  `b4_a2_w240`, `b4_a6_w60`, 0.001 to 0.002). The cause has not been
+  investigated. `optimal.py` ranks demands by priority first and cost
+  second, but the simulation calls the allocator once for each casualty it
+  sends and uses only the first placement of each answer (`engine.py`),
+  so the best answer of each call is not the best run. Whether this
+  explains these cells was not checked.
 
 ## Consequences
 
